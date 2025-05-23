@@ -9,8 +9,8 @@
     <style>
         /* Custom styles for better aesthetics */
         body {
-            font-family: "Happy Monkey", cursive; /* Changed to Happy Monkey */
-            background-color: #f0f4f8; /* Light blue-gray background */
+            font-family: "Happy Monkey", cursive;
+            background-color: #f0f4f8;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -19,36 +19,36 @@
         }
         .container {
             background-color: #ffffff;
-            border-radius: 1.5rem; /* More rounded corners */
+            border-radius: 1.5rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            padding: 2.5rem; /* Increased padding */
-            max-width: 90vw; /* Max width for responsiveness */
-            width: 768px; /* Medium width */
+            padding: 2.5rem;
+            max-width: 90vw;
+            width: 768px;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem; /* Space between sections */
+            gap: 1.5rem;
         }
         .input-group label {
             font-weight: 600;
             margin-bottom: 0.5rem;
             display: block;
-            color: #334155; /* Darker text for labels */
+            color: #334155;
         }
         .input-group input[type="file"],
         .input-group input[type="text"] {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 1px solid #cbd5e1; /* Light gray border */
-            border-radius: 0.75rem; /* Rounded input fields */
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
             font-size: 1rem;
-            color: #475569; /* Medium gray text */
+            color: #475569;
             transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
         .input-group input[type="file"]:focus,
         .input-group input[type="text"]:focus {
             outline: none;
-            border-color: #3b82f6; /* Blue focus border */
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Blue focus shadow */
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
         }
         .btn {
             padding: 0.75rem 1.5rem;
@@ -62,37 +62,37 @@
             gap: 0.5rem;
         }
         .btn-primary {
-            background-color: #3b82f6; /* Blue */
+            background-color: #3b82f6;
             color: #ffffff;
         }
         .btn-primary:hover {
-            background-color: #2563eb; /* Darker blue on hover */
+            background-color: #2563eb;
             transform: translateY(-1px);
         }
         .btn-primary:active {
             transform: translateY(0);
         }
         canvas {
-            border: 1px solid #e2e8f0; /* Light border for canvas */
+            border: 1px solid #e2e8f0;
             border-radius: 0.75rem;
-            background-color: #f8fafc; /* Very light background for empty canvas */
-            display: block; /* Remove extra space below canvas */
-            max-width: 100%; /* Ensure canvas is responsive */
-            height: auto; /* Maintain aspect ratio */
-            margin: 0 auto; /* Center the canvas */
-            cursor: grab; /* Indicate draggable */
+            background-color: #f8fafc;
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+            cursor: grab;
         }
         canvas.dragging {
-            cursor: grabbing; /* Indicate dragging */
+            cursor: grabbing;
         }
         .message-box {
-            background-color: #fffbeb; /* Light yellow background */
-            border: 1px solid #fcd34d; /* Yellow border */
-            color: #b45309; /* Darker yellow text */
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #b45309;
             padding: 1rem;
             border-radius: 0.75rem;
             margin-top: 1rem;
-            display: none; /* Hidden by default */
+            display: none;
         }
         .message-box.show {
             display: block;
@@ -155,11 +155,12 @@
         const ctx = imageCanvas.getContext('2d');
         const messageBox = document.getElementById('messageBox');
 
-        let originalImage = null; // Stores the original uploaded image
-        let textX = 0; // X-coordinate of the copyright text
-        let textY = 0; // Y-coordinate of the copyright text (baseline)
-        let isDragging = false; // Flag to indicate if text is being dragged
-        let offsetX, offsetY; // Offset for dragging
+        let originalImage = null;
+        let textX = 0;
+        let textY = 0;
+        let isDragging = false;
+        let offsetX, offsetY;
+        let originalUploadedFileName = ''; // Variable to store the original filename
 
         // Function to display messages to the user
         function showMessage(message, type = 'warning') {
@@ -167,50 +168,44 @@
             messageBox.className = `message-box show bg-${type === 'error' ? 'red' : 'yellow'}-100 border-${type === 'error' ? 'red' : 'yellow'}-400 text-${type === 'error' ? 'red' : 'yellow'}-700`;
             setTimeout(() => {
                 messageBox.classList.remove('show');
-            }, 5000); // Hide after 5 seconds
+            }, 5000);
         }
 
         // Function to draw the image and copyright text on the canvas
         function drawImageWithCopyright() {
             if (!originalImage) {
-                // If no image is loaded, clear canvas and return
                 ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
                 imageCanvas.width = 0;
                 imageCanvas.height = 0;
                 return;
             }
 
-            // Set canvas dimensions to match the image
             imageCanvas.width = originalImage.width;
             imageCanvas.height = originalImage.height;
 
-            // Clear canvas and draw the original image
             ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
             ctx.drawImage(originalImage, 0, 0, imageCanvas.width, imageCanvas.height);
 
             const text = copyrightText.value.trim();
             if (text === "") {
-                return; // Don't draw if text is empty
+                return;
             }
 
             const size = parseInt(textSize.value);
             const color = textColor.value;
 
-            ctx.font = `${size}px "Happy Monkey", cursive`; // Set font to Happy Monkey
+            ctx.font = `${size}px "Happy Monkey", cursive`;
             ctx.fillStyle = color;
-            ctx.textAlign = 'left'; // Always left aligned for dragging
-            ctx.textBaseline = 'alphabetic'; // Always alphabetic for dragging
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
 
-            // Add a subtle text shadow for better visibility on various backgrounds
             ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
             ctx.shadowBlur = 5;
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
 
-            // Draw the text at the current textX, textY coordinates
             ctx.fillText(text, textX, textY);
 
-            // Reset shadow for subsequent drawings if any
             ctx.shadowColor = 'transparent';
             ctx.shadowBlur = 0;
             ctx.shadowOffsetX = 0;
@@ -225,10 +220,8 @@
                 ctx.font = `${size}px "Happy Monkey", cursive`;
                 const textMetrics = ctx.measureText(copyrightText.value.trim());
 
-                // Calculate initial X based on text width and padding
                 textX = originalImage.width - padding - textMetrics.width;
-                // Calculate initial Y based on canvas height, padding, and text ascent (text is drawn above baseline)
-                textY = originalImage.height - padding; // Baseline at bottom padding
+                textY = originalImage.height - padding;
             }
         }
 
@@ -236,12 +229,13 @@
         imageUpload.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
+                originalUploadedFileName = file.name; // Store the original file name here
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
                         originalImage = img;
-                        initializeTextPosition(); // Initialize text position after image loads
+                        initializeTextPosition();
                         drawImageWithCopyright();
                     };
                     img.onerror = () => {
@@ -255,6 +249,7 @@
                 reader.readAsDataURL(file);
             } else {
                 originalImage = null;
+                originalUploadedFileName = ''; // Clear filename if no file is selected
                 ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
                 imageCanvas.width = 0;
                 imageCanvas.height = 0;
@@ -263,7 +258,7 @@
 
         // Event listeners for copyright text, color, and size changes
         copyrightText.addEventListener('input', () => {
-            if (originalImage) { // Only re-initialize position if image is loaded
+            if (originalImage) {
                 initializeTextPosition();
             }
             drawImageWithCopyright();
@@ -271,7 +266,7 @@
         textColor.addEventListener('input', drawImageWithCopyright);
         textSize.addEventListener('input', () => {
             textSizeValue.textContent = `${textSize.value}px`;
-            if (originalImage) { // Only re-initialize position if image is loaded
+            if (originalImage) {
                 initializeTextPosition();
             }
             drawImageWithCopyright();
@@ -299,21 +294,18 @@
 
         // Mouse event listeners for dragging the text
         imageCanvas.addEventListener('mousedown', (e) => {
-            if (!originalImage) return; // Don't drag if no image
+            if (!originalImage) return;
             const { mouseX, mouseY } = getScaledCoordinates(e);
 
             const text = copyrightText.value.trim();
             if (text === "") return;
 
-            // Get text metrics to check if mouse is over the text
             const size = parseInt(textSize.value);
             ctx.font = `${size}px "Happy Monkey", cursive`;
             const textMetrics = ctx.measureText(text);
             const textWidth = textMetrics.width;
-            const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent; // Total text height
+            const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
 
-            // Check if mouse is within the bounding box of the text
-            // textX is left edge, textY is baseline
             if (mouseX >= textX && mouseX <= textX + textWidth &&
                 mouseY >= textY - textMetrics.actualBoundingBoxAscent && mouseY <= textY + textMetrics.actualBoundingBoxDescent) {
                 isDragging = true;
@@ -327,11 +319,9 @@
             if (!isDragging) return;
             const { mouseX, mouseY } = getScaledCoordinates(e);
 
-            // Calculate new text position
             let newTextX = mouseX - offsetX;
             let newTextY = mouseY - offsetY;
 
-            // Constrain text within canvas bounds
             const text = copyrightText.value.trim();
             const size = parseInt(textSize.value);
             ctx.font = `${size}px "Happy Monkey", cursive`;
@@ -340,13 +330,11 @@
             const textAscent = textMetrics.actualBoundingBoxAscent;
             const textDescent = textMetrics.actualBoundingBoxDescent;
 
-            // X-axis constraints
             if (newTextX < 0) newTextX = 0;
             if (newTextX + textWidth > imageCanvas.width) newTextX = imageCanvas.width - textWidth;
 
-            // Y-axis constraints (considering baseline and ascent/descent)
-            if (newTextY - textAscent < 0) newTextY = textAscent; // Top edge
-            if (newTextY + textDescent > imageCanvas.height) newTextY = imageCanvas.height - textDescent; // Bottom edge
+            if (newTextY - textAscent < 0) newTextY = textAscent;
+            if (newTextY + textDescent > imageCanvas.height) newTextY = imageCanvas.height - textDescent;
 
             textX = newTextX;
             textY = newTextY;
@@ -360,7 +348,7 @@
 
         // Handle touch events for dragging on mobile devices
         imageCanvas.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevent scrolling
+            e.preventDefault();
             const { mouseX, mouseY } = getScaledCoordinates(e);
 
             const text = copyrightText.value.trim();
@@ -383,7 +371,7 @@
         });
 
         imageCanvas.addEventListener('touchmove', (e) => {
-            e.preventDefault(); // Prevent scrolling
+            e.preventDefault();
             if (!isDragging) return;
             const { mouseX, mouseY } = getScaledCoordinates(e);
 
@@ -422,12 +410,24 @@
                 return;
             }
 
+            let downloadFileName = 'copyrighted_image.png'; // Fallback name
+
+            if (originalUploadedFileName) {
+                const parts = originalUploadedFileName.split('.');
+                let name = parts[0];
+                // Check if there was an extension. If not, default to 'png'.
+                let extension = parts.length > 1 ? parts.pop() : 'png';
+
+                // Construct the new filename with '_copyrighted' appended
+                downloadFileName = `${name}_copyrighted.${extension}`;
+            }
+
             const link = document.createElement('a');
-            link.download = `copyrighted_${Date.now()}.png`; // Unique filename
-            link.href = imageCanvas.toDataURL('image/png'); // Get image data as PNG
-            document.body.appendChild(link); // Append to body to make it clickable
-            link.click(); // Programmatically click the link
-            document.body.removeChild(link); // Clean up
+            link.download = downloadFileName; // Use the constructed filename
+            link.href = imageCanvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         });
 
         // Initial update for text size display
