@@ -125,7 +125,14 @@
             <input type="range" id="textSize" min="10" max="100" value="30" class="w-full">
             <span id="textSizeValue" class="text-sm text-gray-600 mt-1 block">30px</span>
         </div>
-
+   <!-- Rotation -->
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label for="rotation" class="text-sm font-medium text-gray-700">Rotation</label>
+                            <span id="rotationValue" class="text-sm font-mono bg-gray-200 text-gray-800 px-2 py-1 rounded-md">0°</span>
+                        </div>
+                        <input type="range" id="rotation" min="-180" max="180" value="90" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
         <div class="flex justify-center mt-4">
             <button id="downloadBtn" class="btn btn-primary">
                 Download Image
@@ -150,6 +157,8 @@
         const textColor = document.getElementById('textColor');
         const textSize = document.getElementById('textSize');
         const textSizeValue = document.getElementById('textSizeValue');
+        const rotation = document.getElementById('rotation');
+        const rotationValue = document.getElementById('rotationValue');
         const downloadBtn = document.getElementById('downloadBtn');
         const imageCanvas = document.getElementById('imageCanvas');
         const ctx = imageCanvas.getContext('2d');
@@ -193,7 +202,9 @@
 
             const size = parseInt(textSize.value);
             const color = textColor.value;
+            const angle = parseInt(rotation.value);
 
+            ctx.save();
             ctx.font = `${size}px "Happy Monkey", cursive`;
             ctx.fillStyle = color;
             ctx.textAlign = 'left';
@@ -203,8 +214,12 @@
             ctx.shadowBlur = 5;
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
+            
+            ctx.translate(textX, textY);
+            ctx.rotate(angle * Math.PI / 180);
+            ctx.fillText(text, 0, 0);
 
-            ctx.fillText(text, textX, textY);
+            ctx.restore();
 
             ctx.shadowColor = 'transparent';
             ctx.shadowBlur = 0;
@@ -269,6 +284,10 @@
             if (originalImage) {
                 initializeTextPosition();
             }
+            drawImageWithCopyright();
+        });
+        rotation.addEventListener('input', () => {
+            rotationValue.textContent = `${rotation.value}°`;
             drawImageWithCopyright();
         });
 
@@ -414,9 +433,8 @@
 
             if (originalUploadedFileName) {
                 const parts = originalUploadedFileName.split('.');
-                let name = parts[0];
-                // Check if there was an extension. If not, default to 'png'.
-                let extension = parts.length > 1 ? parts.pop() : 'png';
+                const name = parts.slice(0, -1).join('.');
+                const extension = parts.length > 1 ? parts.pop() : 'png';
 
                 // Construct the new filename with '_copyrighted' appended
                 downloadFileName = `${name}_copyrighted.${extension}`;
@@ -430,8 +448,10 @@
             document.body.removeChild(link);
         });
 
-        // Initial update for text size display
+        // Initial update for text size and rotation display
         textSizeValue.textContent = `${textSize.value}px`;
+        rotationValue.textContent = `${rotation.value}°`;
+        
         // Initial drawing to set up canvas with default values if no image is loaded
         drawImageWithCopyright();
 
