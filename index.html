@@ -16,6 +16,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 2rem 0; /* Add padding for smaller screens */
         }
         .container {
             background-color: #ffffff;
@@ -39,4 +40,326 @@
             width: 100%;
             padding: 0.75rem 1rem;
             border: 1px solid #cbd5e1;
-            border-radius: 0.75rem
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            color: #475569;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .input-group input[type="file"]:focus,
+        .input-group input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            white-space: nowrap; /* Prevent button text from wrapping */
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #64748b;
+            color: #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #475569;
+            transform: translateY(-1px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        canvas {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background-color: #f8fafc;
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+            cursor: grab;
+        }
+        canvas.dragging {
+            cursor: grabbing;
+        }
+        .message-box {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #b45309;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .message-box.show {
+            display: block;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+            justify-content: center;
+            align-items: center;
+            gap: 1rem; /* Space between buttons */
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-extrabold text-center text-gray-800 mb-4">
+            Add Copyright to Image
+        </h1>
+
+        <div class="input-group">
+            <label for="imageUpload" class="text-lg">Upload Image:</label>
+            <input type="file" id="imageUpload" accept="image/*" class="w-full">
+        </div>
+
+        <div class="input-group">
+            <label for="copyrightText" class="text-lg">Copyright Text:</label>
+            <input type="text" id="copyrightText" value="©Pooja" placeholder="e.g., © 2025 Your Name" class="w-full">
+        </div>
+
+        <div class="input-group">
+            <label for="textColor" class="text-lg">Text Color:</label>
+            <input type="color" id="textColor" value="#FFFFFF" class="w-full h-12">
+        </div>
+
+        <div class="input-group">
+            <label for="textSize" class="text-lg">Text Size:</label>
+            <input type="range" id="textSize" min="10" max="100" value="40" class="w-full">
+            <span id="textSizeValue" class="text-sm text-gray-600 mt-1 block">40px</span>
+        </div>
+   
+        <div>
+            <div class="flex justify-between items-center">
+                <label for="rotation" class="text-sm font-medium text-gray-700">Rotation</label>
+                <span id="rotationValue" class="text-sm font-mono bg-gray-200 text-gray-800 px-2 py-1 rounded-md">0°</span>
+            </div>
+            <input type="range" id="rotation" min="-180" max="180" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="button-group">
+            <button id="recenterBtn" class="btn btn-secondary">
+                Recenter Text
+            </button>
+            <button id="downloadBtn" class="btn btn-primary">
+                Download Image
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" x2="12" y1="15" y2="3"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="message-box" id="messageBox"></div>
+
+        <h2 class="text-xl font-semibold text-gray-700 mt-6 mb-3 text-center">Preview:</h2>
+        <canvas id="imageCanvas" class="w-full h-auto"></canvas>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const imageUpload = document.getElementById('imageUpload');
+        const copyrightText = document.getElementById('copyrightText');
+        const textColor = document.getElementById('textColor');
+        const textSize = document.getElementById('textSize');
+        const textSizeValue = document.getElementById('textSizeValue');
+        const rotation = document.getElementById('rotation');
+        const rotationValue = document.getElementById('rotationValue');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const recenterBtn = document.getElementById('recenterBtn');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const ctx = imageCanvas.getContext('2d');
+        const messageBox = document.getElementById('messageBox');
+
+        let originalImage = null;
+        let textX = 0;
+        let textY = 0;
+        let isDragging = false;
+        let offsetX, offsetY;
+        let originalUploadedFileName = '';
+
+        function showMessage(message, type = 'warning') {
+            messageBox.textContent = message;
+            messageBox.className = `message-box show bg-${type === 'error' ? 'red' : 'yellow'}-100 border-${type === 'error' ? 'red' : 'yellow'}-400 text-${type === 'error' ? 'red' : 'yellow'}-700`;
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 5000);
+        }
+
+        function drawImageWithCopyright() {
+            if (!originalImage) {
+                ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+                imageCanvas.width = 0;
+                imageCanvas.height = 0;
+                return;
+            }
+
+            imageCanvas.width = originalImage.width;
+            imageCanvas.height = originalImage.height;
+            ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            ctx.drawImage(originalImage, 0, 0, imageCanvas.width, imageCanvas.height);
+
+            const text = copyrightText.value.trim();
+            if (text === "") return;
+
+            const size = parseInt(textSize.value);
+            const color = textColor.value;
+            const angle = parseInt(rotation.value);
+
+            ctx.save();
+            ctx.font = `${size}px "Happy Monkey", cursive`;
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center'; // Center the text horizontally
+            ctx.textBaseline = 'middle'; // Center the text vertically
+
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            ctx.translate(textX, textY);
+            ctx.rotate(angle * Math.PI / 180);
+            ctx.fillText(text, 0, 0);
+
+            ctx.restore();
+        }
+        
+        // Center text on the canvas
+        function centerText() {
+            if (originalImage) {
+                textX = imageCanvas.width / 2;
+                textY = imageCanvas.height / 2;
+                drawImageWithCopyright();
+            }
+        }
+
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                originalUploadedFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        originalImage = img;
+                        centerText(); // Position text in the center on new image load
+                    };
+                    img.onerror = () => showMessage("Error loading image. Please try a different file.", "error");
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => showMessage("Error reading file.", "error");
+                reader.readAsDataURL(file);
+            } else {
+                originalImage = null;
+                originalUploadedFileName = '';
+                ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            }
+        });
+
+        // Add event listeners for controls
+        copyrightText.addEventListener('input', drawImageWithCopyright);
+        textColor.addEventListener('input', drawImageWithCopyright);
+        textSize.addEventListener('input', () => {
+            textSizeValue.textContent = `${textSize.value}px`;
+            drawImageWithCopyright();
+        });
+        rotation.addEventListener('input', () => {
+            rotationValue.textContent = `${rotation.value}°`;
+            drawImageWithCopyright();
+        });
+        recenterBtn.addEventListener('click', centerText);
+
+        function getScaledCoordinates(e) {
+            const rect = imageCanvas.getBoundingClientRect();
+            const scaleX = imageCanvas.width / rect.width;
+            const scaleY = imageCanvas.height / rect.height;
+            const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+            return {
+                mouseX: (clientX - rect.left) * scaleX,
+                mouseY: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function handleDragStart(e) {
+            e.preventDefault();
+            if (!originalImage) return;
+            const { mouseX, mouseY } = getScaledCoordinates(e);
+            
+            // Simplified hit detection: for simplicity, we assume if you click on the canvas, you want to drag the text.
+            // A more complex solution would be needed for pixel-perfect hit detection on rotated text.
+            isDragging = true;
+            imageCanvas.classList.add('dragging');
+            offsetX = mouseX - textX;
+            offsetY = mouseY - textY;
+        }
+        
+        function handleDragMove(e) {
+            e.preventDefault();
+            if (!isDragging) return;
+            const { mouseX, mouseY } = getScaledCoordinates(e);
+            textX = mouseX - offsetX;
+            textY = mouseY - offsetY;
+            drawImageWithCopyright();
+        }
+
+        function handleDragEnd() {
+            isDragging = false;
+            imageCanvas.classList.remove('dragging');
+        }
+
+        // Mouse listeners
+        imageCanvas.addEventListener('mousedown', handleDragStart);
+        imageCanvas.addEventListener('mousemove', handleDragMove);
+        imageCanvas.addEventListener('mouseup', handleDragEnd);
+        imageCanvas.addEventListener('mouseleave', handleDragEnd); // Stop dragging if mouse leaves canvas
+
+        // Touch listeners
+        imageCanvas.addEventListener('touchstart', handleDragStart);
+        imageCanvas.addEventListener('touchmove', handleDragMove);
+        imageCanvas.addEventListener('touchend', handleDragEnd);
+        
+        downloadBtn.addEventListener('click', () => {
+            if (!originalImage) {
+                showMessage("Please upload an image first to download.", "error");
+                return;
+            }
+            let downloadFileName = 'copyrighted_image.png';
+            if (originalUploadedFileName) {
+                const parts = originalUploadedFileName.split('.');
+                const name = parts.slice(0, -1).join('.');
+                const extension = parts.length > 1 ? parts.pop() : 'png';
+                downloadFileName = `${name}_copyrighted.${extension}`;
+            }
+            const link = document.createElement('a');
+            link.download = downloadFileName;
+            link.href = imageCanvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Initial UI setup
+        textSizeValue.textContent = `${textSize.value}px`;
+        rotationValue.textContent = `${rotation.value}°`;
+        drawImageWithCopyright();
+        window.addEventListener('resize', drawImageWithCopyright);
+    </script>
+</body>
+</html>
